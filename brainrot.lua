@@ -1,137 +1,4 @@
--- Services
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local RunService = game:GetService("RunService")
-
--- GUI
-local screenGui = Instance.new("ScreenGui")
-screenGui.Parent = Players.LocalPlayer.PlayerGui
-
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0.5, 0, 0.5, 0)
-mainFrame.Position = UDim2.new(0.25, 0, 0.25, 0)
-mainFrame.BackgroundColor3 = Color3.new(1, 1, 1)
-mainFrame.Parent = screenGui
-
-local brainrotList = Instance.new("TextBox")
-brainrotList.Size = UDim2.new(1, 0, 0.8, 0)
-brainrotList.Position = UDim2.new(0, 0, 0.1, 0)
-brainrotList.BackgroundColor3 = Color3.new(0.9, 0.9, 0.9)
-brainrotList.Parent = mainFrame
-
-local teleportButton = Instance.new("TextButton")
-teleportButton.Size = UDim2.new(0.5, 0, 0.1, 0)
-teleportButton.Position = UDim2.new(0.25, 0, 0.9, 0)
-teleportButton.Text = "Teleport to Base"
-teleportButton.Parent = mainFrame
-
-local stealButton = Instance.new("TextButton")
-stealButton.Size = UDim2.new(0.5, 0, 0.1, 0)
-stealButton.Position = UDim2.new(0, 0, 0.9, 0)
-stealButton.Text = "Steal Best Brainrot"
-stealButton.Parent = mainFrame
-
--- Variables
-local player = Players.LocalPlayer
-local character = player.Character
-local humanoid = character:WaitForChild("Humanoid")
-local bestBrainrot = nil
-local brainrotTable = {}
-
--- Functions
-local function getBestBrainrot()
-    for _, brainrot in pairs(workspace:GetDescendants()) do
-        if brainrot.Name == "Brainrot" then
-            if not bestBrainrot or brainrot.Value > bestBrainrot.Value then
-                bestBrainrot = brainrot
-            end
-        end
-    end
-    return bestBrainrot
-end
-
-local function stealBrainrot()
-    local best = getBestBrainrot()
-    if best then
-        local target = best.Parent
-        if target:FindFirstChild("Humanoid") then
-            local targetCharacter = target.Character
-            if targetCharacter:FindFirstChild("Brainrot") then
-                local brainrot = targetCharacter.Brainrot
-                brainrot.Parent = character
-                table.insert(brainrotTable, brainrot.Name)
-                brainrotList.Text = table.concat(brainrotTable, ", ")
-            end
-        end
-    end
-end
-
-local function teleportToBase(target)
-    local targetCharacter = target.Character
-    if targetCharacter then
-        local targetPosition = targetCharacter.HumanoidRootPart.Position
-        local tweenInfo = TweenInfo.new(1, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-        local tween = TweenService:Create(humanoid.RootPart, tweenInfo, {CFrame = CFrame.new(targetPosition)})
-        tween:Play()
-    end
-end
-
-local function xrayBases()
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= character then
-            local character = player.Character
-            if character then
-                for _, part in pairs(character:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.Material = Enum.Material.Glass
-                        part.Transparency = 0.5
-                    end
-                end
-            end
-        end
-    end
-end
-
--- Event handlers
-stealButton.MouseButton1Click:Connect(stealBrainrot)
-teleportButton.MouseButton1Click:Connect(function()
-    local target = Players.LocalPlayer
-    local targetName = ""
-    local teleportMenu = Instance.new("TextEntry")
-    teleportMenu.Size = UDim2.new(0.5, 0, 0.1, 0)
-    teleportMenu.Position = UDim2.new(0.25, 0, 0.95, 0)
-    teleportMenu.Parent = mainFrame
-    teleportMenu.FocusLost:Connect(function()
-        targetName = teleportMenu.Text
-        local target = Players:FindFirstChild(targetName)
-        if target then
-            teleportToBase(target)
-        end
-        teleportMenu:Destroy()
-    end)
-end)
-
-UserInputService.InputBegan:Connect(function(input)
-    if input.KeyCode == Enum.KeyCode.X then
-        xrayBases()
-    end
-end)
-
-RunService.RenderStepped:Connect(function()
-    local best = getBestBrainrot()
-    if best then
-        local progress = best.Value / 100
-        -- progress bar
-        local progressBar = Instance.new("Frame")
-        progressBar.Size = UDim2.new(progress, 0, 0.05, 0)
-        progressBar.Position = UDim2.new(0, 0, 0.05, 0)
-        progressBar.BackgroundColor3 = Color3.new(1, 0, 0)
-        progressBar.Parent = mainFrame
-    end
-end)
--- Meowl Menu UI (LocalScript in StarterPlayerScripts)
+-- Meowl Menu UI v2 (LocalScript in StarterPlayerScripts)
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -141,45 +8,26 @@ local Lighting = game:GetService("Lighting")
 local player = Players.LocalPlayer
 
 -- Palette
+local DARK_BROWN = Color3.fromRGB(110, 72, 42)
+local LIGHT_BROWN = Color3.fromRGB(222, 192, 150)
 local GREEN = Color3.fromRGB(110, 200, 90)
-local DARK_GREEN = Color3.fromRGB(60, 140, 55)
 local BLACK = Color3.fromRGB(20, 20, 20)
 local WHITE = Color3.fromRGB(255, 255, 255)
-local BROWN = Color3.fromRGB(205, 170, 125)
+local GREY = Color3.fromRGB(140, 140, 140)
 local FONT = Enum.Font.FredokaOne
 
 -- Helpers
-local function corner(parent, radius)
-    local c = Instance.new("UICorner")
-    c.CornerRadius = UDim.new(0, radius or 12)
-    c.Parent = parent
+local function corner(p, r) local c = Instance.new("UICorner"); c.CornerRadius = UDim.new(0, r or 12); c.Parent = p end
+local function stroke(p, t, col) local s = Instance.new("UIStroke"); s.Thickness = t or 3; s.Color = col or BLACK; s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border; s.Parent = p end
+local function gradient(p, top, bottom)
+    local g = Instance.new("UIGradient")
+    g.Color = ColorSequence.new(top, bottom)
+    g.Rotation = 90
+    g.Parent = p
 end
-
-local function stroke(parent, thickness, color)
-    local s = Instance.new("UIStroke")
-    s.Thickness = thickness or 3
-    s.Color = color or BLACK
-    s.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-    s.Parent = parent
-end
-
-local function bubbleText(obj, size)
-    obj.Font = FONT
-    obj.TextSize = size or 20
-    obj.TextColor3 = WHITE
-    local s = Instance.new("UIStroke") -- outlined "bubbly" letters
-    s.Thickness = 2
-    s.Color = BLACK
-    s.Parent = obj
-end
-
-local function bounce(obj)
-    local base = obj.Size
-    local grow = UDim2.new(base.X.Scale * 1.06, base.X.Offset * 1.06, base.Y.Scale * 1.06, base.Y.Offset * 1.06)
-    TweenService:Create(obj, TweenInfo.new(0.08), { Size = grow }):Play()
-    task.delay(0.08, function()
-        TweenService:Create(obj, TweenInfo.new(0.25, Enum.EasingStyle.Back), { Size = base }):Play()
-    end)
+local function bubbleText(o, size)
+    o.Font = FONT; o.TextSize = size or 22; o.TextColor3 = WHITE
+    local s = Instance.new("UIStroke"); s.Thickness = 2.5; s.Color = BLACK; s.Parent = o
 end
 
 -- ScreenGui
@@ -189,194 +37,202 @@ gui.ResetOnSpawn = false
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = player:WaitForChild("PlayerGui")
 
--- Main window
+local OPEN_SIZE = UDim2.fromOffset(560, 620)
+
+-- Drop shadow
+local shadow = Instance.new("Frame")
+shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+shadow.Position = UDim2.new(0.5, 8, 0.5, 10)
+shadow.Size = OPEN_SIZE
+shadow.BackgroundColor3 = BLACK
+shadow.BackgroundTransparency = 0.6
+shadow.Parent = gui
+corner(shadow, 26)
+
+-- Outer frame (dark brown)
 local main = Instance.new("Frame")
 main.Name = "Main"
 main.AnchorPoint = Vector2.new(0.5, 0.5)
 main.Position = UDim2.fromScale(0.5, 0.5)
-main.Size = UDim2.fromOffset(360, 400)
-main.BackgroundColor3 = BROWN
+main.Size = OPEN_SIZE
+main.BackgroundColor3 = WHITE
 main.Parent = gui
-corner(main, 18)
-stroke(main, 4)
+corner(main, 26)
+stroke(main, 5)
+gradient(main, Color3.fromRGB(135, 92, 56), DARK_BROWN)
 
 -- Title bar
 local titleBar = Instance.new("Frame")
-titleBar.Size = UDim2.new(1, 0, 0, 56)
-titleBar.BackgroundColor3 = GREEN
+titleBar.Position = UDim2.fromOffset(14, 14)
+titleBar.Size = UDim2.new(1, -28, 0, 72)
+titleBar.BackgroundColor3 = WHITE
 titleBar.Parent = main
-corner(titleBar, 18)
+corner(titleBar, 20)
 stroke(titleBar, 3)
+gradient(titleBar, Color3.fromRGB(140, 220, 115), Color3.fromRGB(70, 150, 60))
+
+-- Gloss highlight on the title bar
+local gloss = Instance.new("Frame")
+gloss.Position = UDim2.fromOffset(8, 5)
+gloss.Size = UDim2.new(1, -16, 0.4, 0)
+gloss.BackgroundColor3 = WHITE
+gloss.BackgroundTransparency = 0.75
+gloss.Parent = titleBar
+corner(gloss, 14)
 
 local title = Instance.new("TextLabel")
 title.BackgroundTransparency = 1
-title.Position = UDim2.fromOffset(16, 0)
-title.Size = UDim2.new(1, -80, 1, 0)
+title.Position = UDim2.fromOffset(20, 0)
+title.Size = UDim2.new(1, -100, 1, 0)
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Text = "🐱 Meowl Menu"
 title.Parent = titleBar
-bubbleText(title, 28)
+bubbleText(title, 36)
 
 local closeBtn = Instance.new("TextButton")
 closeBtn.AnchorPoint = Vector2.new(1, 0.5)
-closeBtn.Position = UDim2.new(1, -12, 0.5, 0)
-closeBtn.Size = UDim2.fromOffset(38, 38)
+closeBtn.Position = UDim2.new(1, -16, 0.5, 0)
+closeBtn.Size = UDim2.fromOffset(48, 48)
 closeBtn.BackgroundColor3 = BLACK
 closeBtn.Text = "X"
 closeBtn.Parent = titleBar
-corner(closeBtn, 19)
-stroke(closeBtn, 2, WHITE)
-bubbleText(closeBtn, 22)
+corner(closeBtn, 24)
+stroke(closeBtn, 3, WHITE)
+bubbleText(closeBtn, 26)
 
--- Feature list
+-- Inner panel (light brown)
+local inner = Instance.new("Frame")
+inner.Position = UDim2.fromOffset(14, 100)
+inner.Size = UDim2.new(1, -28, 1, -160)
+inner.BackgroundColor3 = WHITE
+inner.Parent = main
+corner(inner, 20)
+stroke(inner, 3)
+gradient(inner, Color3.fromRGB(238, 214, 178), LIGHT_BROWN)
+
 local list = Instance.new("ScrollingFrame")
-list.Position = UDim2.fromOffset(14, 70)
-list.Size = UDim2.new(1, -28, 1, -110)
-list.BackgroundColor3 = WHITE
-list.ScrollBarThickness = 6
-list.ScrollBarImageColor3 = DARK_GREEN
+list.BackgroundTransparency = 1
+list.Size = UDim2.fromScale(1, 1)
+list.ScrollBarThickness = 8
+list.ScrollBarImageColor3 = DARK_BROWN
 list.AutomaticCanvasSize = Enum.AutomaticSize.Y
 list.CanvasSize = UDim2.new()
-list.Parent = main
-corner(list, 14)
-stroke(list, 3)
+list.BorderSizePixel = 0
+list.Parent = inner
 
 local pad = Instance.new("UIPadding")
-pad.PaddingTop, pad.PaddingBottom = UDim.new(0, 10), UDim.new(0, 10)
-pad.PaddingLeft, pad.PaddingRight = UDim.new(0, 10), UDim.new(0, 10)
+pad.PaddingTop, pad.PaddingBottom = UDim.new(0, 14), UDim.new(0, 14)
+pad.PaddingLeft, pad.PaddingRight = UDim.new(0, 14), UDim.new(0, 14)
 pad.Parent = list
 
 local layout = Instance.new("UIListLayout")
-layout.Padding = UDim.new(0, 8)
+layout.Padding = UDim.new(0, 12)
 layout.Parent = list
 
 local footer = Instance.new("TextLabel")
 footer.BackgroundTransparency = 1
-footer.Position = UDim2.new(0, 0, 1, -36)
-footer.Size = UDim2.new(1, 0, 0, 30)
+footer.Position = UDim2.new(0, 0, 1, -52)
+footer.Size = UDim2.new(1, 0, 0, 40)
 footer.Text = "Press M to hide / show"
 footer.Parent = main
-bubbleText(footer, 16)
+bubbleText(footer, 20)
 
--- Toggle row builder
+-- Toggle row: grey when off, white when on
 local function addToggle(labelText, callback)
     local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, 0, 0, 48)
-    row.BackgroundColor3 = BLACK
+    row.Size = UDim2.new(1, 0, 0, 64)
+    row.BackgroundColor3 = WHITE
     row.Parent = list
-    corner(row, 12)
+    corner(row, 16)
+    stroke(row, 3)
+    gradient(row, Color3.fromRGB(45, 45, 45), BLACK)
 
     local label = Instance.new("TextLabel")
     label.BackgroundTransparency = 1
-    label.Position = UDim2.fromOffset(12, 0)
-    label.Size = UDim2.new(1, -90, 1, 0)
+    label.Position = UDim2.fromOffset(18, 0)
+    label.Size = UDim2.new(1, -120, 1, 0)
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Text = labelText
     label.Parent = row
-    bubbleText(label, 20)
+    bubbleText(label, 26)
 
     local switch = Instance.new("TextButton")
     switch.AnchorPoint = Vector2.new(1, 0.5)
-    switch.Position = UDim2.new(1, -10, 0.5, 0)
-    switch.Size = UDim2.fromOffset(60, 30)
-    switch.BackgroundColor3 = BROWN
+    switch.Position = UDim2.new(1, -16, 0.5, 0)
+    switch.Size = UDim2.fromOffset(80, 40)
+    switch.BackgroundColor3 = GREY
     switch.Text = ""
     switch.AutoButtonColor = false
     switch.Parent = row
-    corner(switch, 15)
-    stroke(switch, 2, WHITE)
+    corner(switch, 20)
+    stroke(switch, 3, BLACK)
 
     local knob = Instance.new("Frame")
-    knob.Size = UDim2.fromOffset(24, 24)
-    knob.Position = UDim2.fromOffset(3, 3)
-    knob.BackgroundColor3 = WHITE
+    knob.Size = UDim2.fromOffset(32, 32)
+    knob.Position = UDim2.fromOffset(4, 4)
+    knob.BackgroundColor3 = GREEN
     knob.Parent = switch
-    corner(knob, 12)
+    corner(knob, 16)
+    stroke(knob, 2, BLACK)
 
     local on = false
     switch.MouseButton1Click:Connect(function()
         on = not on
-        local info = TweenInfo.new(0.2, Enum.EasingStyle.Back)
-        TweenService:Create(knob, info, { Position = UDim2.fromOffset(on and 33 or 3, 3) }):Play()
-        TweenService:Create(switch, info, { BackgroundColor3 = on and GREEN or BROWN }):Play()
-        bounce(row)
+        local info = TweenInfo.new(0.25, Enum.EasingStyle.Back)
+        TweenService:Create(knob, info, { Position = UDim2.fromOffset(on and 44 or 4, 4) }):Play()
+        TweenService:Create(switch, info, { BackgroundColor3 = on and WHITE or GREY }):Play()
         callback(on)
     end)
 end
 
--- FPS counter (used by the "Show FPS" toggle)
+-- FPS counter
 local fpsLabel = Instance.new("TextLabel")
-fpsLabel.BackgroundColor3 = BLACK
-fpsLabel.Position = UDim2.fromOffset(10, 10)
-fpsLabel.Size = UDim2.fromOffset(100, 32)
+fpsLabel.BackgroundColor3 = DARK_BROWN
+fpsLabel.Position = UDim2.fromOffset(12, 12)
+fpsLabel.Size = UDim2.fromOffset(130, 40)
 fpsLabel.Visible = false
 fpsLabel.Parent = gui
-corner(fpsLabel, 10)
-stroke(fpsLabel, 2, GREEN)
-bubbleText(fpsLabel, 18)
+corner(fpsLabel, 12)
+stroke(fpsLabel, 3)
+bubbleText(fpsLabel, 22)
 
 local frames, elapsed = 0, 0
 RunService.RenderStepped:Connect(function(dt)
-    frames += 1
-    elapsed += dt
+    frames += 1; elapsed += dt
     if elapsed >= 0.5 then
         fpsLabel.Text = "FPS: " .. math.floor(frames / elapsed)
         frames, elapsed = 0, 0
     end
 end)
 
--- Features (safe, client-side only)
+-- Features (client-side only)
 local originalClock = Lighting.ClockTime
+addToggle("Show FPS", function(on) fpsLabel.Visible = on end)
+addToggle("Night Mode", function(on) Lighting.ClockTime = on and 0 or originalClock end)
+addToggle("Meowl Mode 🐱", function(on) title.Text = on and "🐱 MEOWL MODE 🐱" or "🐱 Meowl Menu" end)
 
-addToggle("Show FPS", function(on)
-    fpsLabel.Visible = on
-end)
-
-addToggle("Night Mode", function(on)
-    Lighting.ClockTime = on and 0 or originalClock
-end)
-
-addToggle("Mute Sounds", function(on)
-    game:GetService("SoundService").AmbientReverb = Enum.ReverbType.NoReverb
-    for _, s in ipairs(workspace:GetDescendants()) do
-        if s:IsA("Sound") then
-            s.Volume = on and 0 or (s:GetAttribute("OrigVolume") or s.Volume)
-            if on then s:SetAttribute("OrigVolume", s:GetAttribute("OrigVolume") or 0.5) end
-        end
-    end
-end)
-
-addToggle("Meowl Mode 🐱", function(on)
-    title.Text = on and "🐱 MEOWL MODE 🐱" or "🐱 Meowl Menu"
-    titleBar.BackgroundColor3 = on and DARK_GREEN or GREEN
-end)
-
--- Open / close with bounce
-local openSize = main.Size
+-- Open / close
 local function setOpen(open)
     if open then
-        main.Visible = true
-        main.Size = UDim2.fromOffset(0, 0)
-        TweenService:Create(main, TweenInfo.new(0.4, Enum.EasingStyle.Back), { Size = openSize }):Play()
+        main.Visible, shadow.Visible = true, true
+        main.Size, shadow.Size = UDim2.new(), UDim2.new()
+        local info = TweenInfo.new(0.45, Enum.EasingStyle.Back)
+        TweenService:Create(main, info, { Size = OPEN_SIZE }):Play()
+        TweenService:Create(shadow, info, { Size = OPEN_SIZE }):Play()
     else
-        local t = TweenService:Create(main, TweenInfo.new(0.2), { Size = UDim2.fromOffset(0, 0) })
-        t:Play()
-        t.Completed:Wait()
-        main.Visible = false
+        local t = TweenService:Create(main, TweenInfo.new(0.2), { Size = UDim2.new() })
+        TweenService:Create(shadow, TweenInfo.new(0.2), { Size = UDim2.new() }):Play()
+        t:Play(); t.Completed:Wait()
+        main.Visible, shadow.Visible = false, false
     end
 end
 
-closeBtn.MouseButton1Click:Connect(function()
-    setOpen(false)
-end)
-
+closeBtn.MouseButton1Click:Connect(function() setOpen(false) end)
 UserInputService.InputBegan:Connect(function(input, processed)
-    if not processed and input.KeyCode == Enum.KeyCode.M then
-        setOpen(not main.Visible)
-    end
+    if not processed and input.KeyCode == Enum.KeyCode.M then setOpen(not main.Visible) end
 end)
 
--- Dragging by the title bar
+-- Dragging (shadow follows the window)
 local dragging, dragStart, startPos
 titleBar.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -385,8 +241,9 @@ titleBar.InputBegan:Connect(function(input)
 end)
 UserInputService.InputChanged:Connect(function(input)
     if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        local delta = input.Position - dragStart
-        main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        local d = input.Position - dragStart
+        main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
+        shadow.Position = main.Position + UDim2.fromOffset(8, 10)
     end
 end)
 UserInputService.InputEnded:Connect(function(input)
